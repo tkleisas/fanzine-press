@@ -1,0 +1,29 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## SQLite
+*.db
+*.db-shm
+*.db-wal
+
+## Uploads (user content)
+src/FanzinePress.Web/wwwroot/uploads/*
+!src/FanzinePress.Web/wwwroot/uploads/.gitkeep
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Chromium (PuppeteerSharp)
+.local-chromium/

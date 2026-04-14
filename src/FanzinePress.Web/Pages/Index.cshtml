@@ -1,0 +1,43 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Τεύχη";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Τεύχη</h1>
+    <form method="post" asp-page-handler="Create">
+        <button type="submit" class="btn btn-primary">Νέο Τεύχος</button>
+    </form>
+</div>
+
+@if (Model.Issues.Count == 0)
+{
+    <div class="alert alert-secondary">
+        Δεν υπάρχουν τεύχη ακόμα. Δημιουργήστε το πρώτο σας για να ξεκινήσετε.
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var issue in Model.Issues)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@issue.Title</h5>
+                        <p class="card-text text-muted">
+                            #@issue.Number &mdash; @issue.Date.ToString("dd/MM/yyyy")
+                            <br />
+                            <span class="badge @(issue.Status == FanzinePress.Web.Models.IssueStatus.Draft ? "bg-warning" : "bg-success")">
+                                @(issue.Status == FanzinePress.Web.Models.IssueStatus.Draft ? "Πρόχειρο" : "Δημοσιευμένο")
+                            </span>
+                            &mdash; @issue.Articles.Count άρθρο(-α)
+                        </p>
+                        <a asp-page="/Issues/Edit" asp-route-id="@issue.Id" class="btn btn-outline-primary btn-sm">Επεξεργασία</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

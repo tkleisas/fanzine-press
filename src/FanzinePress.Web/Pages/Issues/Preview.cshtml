@@ -1,0 +1,391 @@
+@page "{id:int}"
+@model FanzinePress.Web.Pages.Issues.PreviewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="utf-8" />
+    <title>@Model.Issue.Title</title>
+    <style>
+        @@page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #1a1a1a;
+            background: #fdf6e3;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 15mm;
+        }
+
+        /* ── Header: split layout ── */
+        .newspaper-header {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            border-bottom: 3px double #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-left .title-image {
+            min-width: 50%;
+            max-width: 100%;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .header-left h1 {
+            font-size: 32pt;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            line-height: 1;
+            margin-bottom: 4px;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            hyphens: auto;
+        }
+
+        .header-left .motto {
+            font-size: 9pt;
+            font-style: italic;
+            color: #444;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 8pt;
+            color: #555;
+            min-width: 160px;
+            flex-shrink: 0;
+        }
+
+        .header-right .issue-info {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+
+        .header-right .header-colophon {
+            line-height: 1.5;
+        }
+
+        .header-right .header-colophon strong {
+            display: block;
+            font-size: 9pt;
+            color: #1a1a1a;
+        }
+
+        /* ── Articles grid ── */
+        .articles-grid {
+            column-count: 3;
+            column-gap: 20px;
+            column-rule: 1px solid #ccc;
+        }
+
+        .article {
+            margin-bottom: 20px;
+            /* No break-inside: avoid — allow articles to flow across pages */
+        }
+
+        .article.span-2 { column-span: all; }
+        .article.span-3 { column-span: all; }
+
+        .article.span-2 .article-body-columns {
+            columns: 2;
+            column-gap: 20px;
+        }
+
+        /* Keep headlines together with the start of text */
+        .article-header {
+            break-inside: avoid;
+            break-after: avoid;
+        }
+
+        .article h2 {
+            font-size: 16pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            line-height: 1.1;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 3px;
+            overflow-wrap: anywhere;
+            word-break: break-all;
+            hyphens: auto;
+        }
+
+        .article h3 {
+            font-size: 11pt;
+            font-weight: normal;
+            font-style: italic;
+            margin-bottom: 6px;
+            color: #444;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            hyphens: auto;
+        }
+
+        .article .author {
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .article .body {
+            text-align: justify;
+            hyphens: auto;
+        }
+
+        .article .body p {
+            text-indent: 1.5em;
+            margin-bottom: 0.3em;
+        }
+
+        .article .body p:first-child {
+            text-indent: 0;
+        }
+
+        .article .body p:first-child::first-letter {
+            font-size: 2.5em;
+            float: left;
+            line-height: 0.8;
+            padding-right: 4px;
+            font-weight: bold;
+        }
+
+        /* ── Photos ── */
+        .article-photo {
+            width: 100%;
+            margin: 8px 0;
+            break-inside: avoid;
+        }
+
+        .article-photo img {
+            width: 100%;
+            display: block;
+        }
+
+        .article-photo .caption {
+            font-size: 8pt;
+            font-style: italic;
+            text-align: center;
+            padding: 3px;
+            background: #eee;
+        }
+
+        .vintage {
+            filter: sepia(0.8) contrast(1.1) brightness(0.95);
+        }
+
+        /* ── Ads ── */
+        .ad-block {
+            border: 2px solid #000;
+            text-align: center;
+            margin: 10px 0;
+            break-inside: avoid;
+            background: #f9f3e0;
+            overflow: hidden;
+        }
+
+        .ad-block img {
+            width: 100%;
+            display: block;
+        }
+
+        .ad-block p {
+            padding: 8px;
+            margin: 0;
+        }
+
+        .ad-block.ad-quarter {
+            max-width: 33%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .ad-block.ad-half {
+            max-width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .ad-block.ad-full {
+            /* full width — default */
+        }
+
+        /* ── Footer colophon ── */
+        .colophon-footer {
+            border-top: 2px solid #000;
+            margin-top: 20px;
+            padding-top: 10px;
+            font-size: 8pt;
+            text-align: center;
+            color: #555;
+        }
+
+        .colophon-footer strong {
+            display: block;
+            font-size: 10pt;
+            margin-bottom: 3px;
+        }
+
+        /* ── Article divider ── */
+        .article-divider {
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            margin: 3px 0 12px 0;
+            letter-spacing: 4px;
+        }
+
+        @@media print {
+            body { background: white; padding: 0; max-width: none; }
+            .vintage { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .ad-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="newspaper-header">
+        <div class="header-left">
+            @if (Model.Issue.TitleImageFileName != null)
+            {
+                <img src="/uploads/@Model.Issue.TitleImageFileName" alt="@Model.Issue.Title" class="title-image" />
+            }
+            <h1>@Model.Issue.Title</h1>
+            @if (Model.Issue.Settings?.Motto != null)
+            {
+                <div class="motto">@Model.Issue.Settings.Motto</div>
+            }
+        </div>
+        <div class="header-right">
+            <div class="issue-info">
+                #@Model.Issue.Number &mdash; @Model.Issue.Date.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("el-GR"))
+            </div>
+            @if (Model.Issue.Colophon != null)
+            {
+                <div class="header-colophon">
+                    @if (!string.IsNullOrEmpty(Model.Issue.Colophon.PublicationName))
+                    {
+                        <strong>@Model.Issue.Colophon.PublicationName</strong>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Issue.Colophon.Editors))
+                    {
+                        <span>Εκδότες: @Model.Issue.Colophon.Editors</span><br />
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Issue.Colophon.Contact))
+                    {
+                        <span>@Model.Issue.Colophon.Contact</span><br />
+                    }
+                </div>
+            }
+            @if (Model.Issue.Settings?.HeaderText != null)
+            {
+                <div style="margin-top:6px;">@Model.Issue.Settings.HeaderText</div>
+            }
+        </div>
+    </div>
+
+    <div class="articles-grid">
+        @{ var articles = Model.Issue.Articles.OrderBy(a => a.Order).ToList(); }
+        @for (int i = 0; i < articles.Count; i++)
+        {
+            var article = articles[i];
+            <div class="article @(article.ColumnSpan > 1 ? $"span-{article.ColumnSpan}" : "")">
+                <div class="article-header">
+                    <h2>@article.Title</h2>
+                    @if (!string.IsNullOrEmpty(article.Subtitle))
+                    {
+                        <h3>@article.Subtitle</h3>
+                    }
+                    @if (!string.IsNullOrEmpty(article.Author))
+                    {
+                        <div class="author">@article.Author</div>
+                    }
+                </div>
+
+                <div class="@(article.ColumnSpan == 2 ? "article-body-columns" : "")">
+                    @foreach (var photo in article.Photos)
+                    {
+                        <div class="article-photo">
+                            <img src="/uploads/@photo.FileName" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
+                            @if (!string.IsNullOrEmpty(photo.Caption))
+                            {
+                                <div class="caption">@photo.Caption @(!string.IsNullOrEmpty(photo.Credit) ? $"({photo.Credit})" : "")</div>
+                            }
+                        </div>
+                    }
+
+                    <div class="body">
+                        @foreach (var paragraph in article.Body.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            <p>@paragraph</p>
+                        }
+                    </div>
+                </div>
+
+                @if (i < articles.Count - 1)
+                {
+                    <div class="article-divider">― ✦ ―</div>
+                }
+            </div>
+        }
+
+    </div>
+
+    @foreach (var ad in Model.Issue.Ads.OrderBy(a => a.Order))
+    {
+        <div class="ad-block ad-@(ad.Size.ToString().ToLower())">
+            @if (ad.ImageFileName != null)
+            {
+                <img src="/uploads/@ad.ImageFileName" alt="Ad" />
+            }
+            @if (!string.IsNullOrEmpty(ad.Text))
+            {
+                <p>@ad.Text</p>
+            }
+        </div>
+    }
+
+    @if (Model.Issue.Colophon != null)
+    {
+        <div class="colophon-footer">
+            <strong>@Model.Issue.Colophon.PublicationName</strong>
+            @if (!string.IsNullOrEmpty(Model.Issue.Colophon.Editors))
+            {
+                <span>Εκδότες: @Model.Issue.Colophon.Editors</span><br />
+            }
+            @if (!string.IsNullOrEmpty(Model.Issue.Colophon.Contributors))
+            {
+                <span>Συντελεστές: @Model.Issue.Colophon.Contributors</span><br />
+            }
+            @if (!string.IsNullOrEmpty(Model.Issue.Colophon.Contact))
+            {
+                <span>@Model.Issue.Colophon.Contact</span><br />
+            }
+            @if (!string.IsNullOrEmpty(Model.Issue.Colophon.ExtraText))
+            {
+                <span>@Model.Issue.Colophon.ExtraText</span>
+            }
+        </div>
+    }
+</body>
+</html>

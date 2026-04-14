@@ -1,0 +1,270 @@
+@page "{id:int}"
+@model FanzinePress.Web.Pages.Issues.EditModel
+@{
+    ViewData["Title"] = $"Επεξεργασία - {Model.Issue.Title}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>@Model.Issue.Title</h1>
+    <div>
+        <a asp-page="/Issues/Preview" asp-route-id="@Model.Issue.Id" class="btn btn-outline-secondary" target="_blank">Προεπισκόπηση</a>
+        <a asp-page="/Issues/ExportPdf" asp-route-id="@Model.Issue.Id" class="btn btn-danger">Εξαγωγή PDF</a>
+        <a asp-page="/Index" class="btn btn-outline-dark">Πίσω στα Τεύχη</a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Issue Settings -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">Στοιχεία Τεύχους</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="UpdateIssue">
+                    <input type="hidden" name="id" value="@Model.Issue.Id" />
+                    <div class="mb-2">
+                        <label class="form-label">Τίτλος</label>
+                        <input type="text" class="form-control" name="title" value="@Model.Issue.Title" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Αριθμός</label>
+                        <input type="number" class="form-control" name="number" value="@Model.Issue.Number" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Ημερομηνία</label>
+                        <input type="date" class="form-control" name="date" value="@Model.Issue.Date.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Πρότυπο</label>
+                        <select class="form-select" name="template">
+                            <option value="classic" selected="@(Model.Issue.Template == "classic")">Κλασικό</option>
+                            <option value="modern" selected="@(Model.Issue.Template == "modern")">Μοντέρνο</option>
+                            <option value="tabloid" selected="@(Model.Issue.Template == "tabloid")">Ταμπλόιντ</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Αποθήκευση</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Εικόνα Τίτλου</div>
+            <div class="card-body">
+                @if (Model.Issue.TitleImageFileName != null)
+                {
+                    <img src="/uploads/@Model.Issue.TitleImageFileName" alt="Εικόνα τίτλου" class="img-fluid rounded mb-2" />
+                    <form method="post" asp-page-handler="RemoveTitleImage">
+                        <input type="hidden" name="id" value="@Model.Issue.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Αφαίρεση Εικόνας</button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted small">Προαιρετική εικόνα κεφαλίδας για το τεύχος.</p>
+                }
+                <form method="post" asp-page-handler="UploadTitleImage" enctype="multipart/form-data" class="mt-2">
+                    <input type="hidden" name="id" value="@Model.Issue.Id" />
+                    <div class="input-group input-group-sm">
+                        <input type="file" class="form-control form-control-sm" name="titleImage" accept="image/*" />
+                        <button type="submit" class="btn btn-outline-success btn-sm">Ανέβασμα</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Ταυτότητα (Colophon)</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="UpdateColophon">
+                    <input type="hidden" name="id" value="@Model.Issue.Id" />
+                    <div class="mb-2">
+                        <label class="form-label">Όνομα Έκδοσης</label>
+                        <input type="text" class="form-control" name="publicationName" value="@Model.Issue.Colophon?.PublicationName" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Εκδότες</label>
+                        <input type="text" class="form-control" name="editors" value="@Model.Issue.Colophon?.Editors" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Συντελεστές</label>
+                        <textarea class="form-control" name="contributors" rows="2">@Model.Issue.Colophon?.Contributors</textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Επικοινωνία</label>
+                        <input type="text" class="form-control" name="contact" value="@Model.Issue.Colophon?.Contact" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Επιπλέον Κείμενο</label>
+                        <textarea class="form-control" name="extraText" rows="2">@Model.Issue.Colophon?.ExtraText</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Αποθήκευση Ταυτότητας</button>
+                </form>
+            </div>
+        </div>
+
+        <partial name="_GlyphPalette" />
+    </div>
+
+    <!-- Articles -->
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4>Άρθρα</h4>
+            <form method="post" asp-page-handler="AddArticle">
+                <input type="hidden" name="id" value="@Model.Issue.Id" />
+                <button type="submit" class="btn btn-success btn-sm">Προσθήκη Άρθρου</button>
+            </form>
+        </div>
+
+        @foreach (var article in Model.Issue.Articles.OrderBy(a => a.Order))
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Άρθρο #@article.Order</span>
+                    <form method="post" asp-page-handler="DeleteArticle" class="d-inline">
+                        <input type="hidden" name="id" value="@Model.Issue.Id" />
+                        <input type="hidden" name="articleId" value="@article.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Διαγραφή αυτού του άρθρου;')">Διαγραφή</button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="UpdateArticle">
+                        <input type="hidden" name="id" value="@Model.Issue.Id" />
+                        <input type="hidden" name="articleId" value="@article.Id" />
+                        <div class="row mb-2">
+                            <div class="col-md-8">
+                                <label class="form-label">Τίτλος</label>
+                                <input type="text" class="form-control" name="articleTitle" value="@article.Title" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Εύρος Στηλών</label>
+                                <select class="form-select" name="columnSpan">
+                                    <option value="1" selected="@(article.ColumnSpan == 1)">1 Στήλη</option>
+                                    <option value="2" selected="@(article.ColumnSpan == 2)">2 Στήλες</option>
+                                    <option value="3" selected="@(article.ColumnSpan == 3)">3 Στήλες (Πλήρες)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Υπότιτλος</label>
+                            <input type="text" class="form-control" name="subtitle" value="@article.Subtitle" />
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-8">
+                                <label class="form-label">Συγγραφέας</label>
+                                <input type="text" class="form-control" name="author" value="@article.Author" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Σειρά</label>
+                                <input type="number" class="form-control" name="order" value="@article.Order" />
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Κείμενο</label>
+                            <textarea class="form-control" name="body" rows="6">@article.Body</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Αποθήκευση Άρθρου</button>
+                    </form>
+
+                    <!-- Photos -->
+                    <hr />
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Φωτογραφίες</strong>
+                        <form method="post" asp-page-handler="UploadPhoto" enctype="multipart/form-data">
+                            <input type="hidden" name="id" value="@Model.Issue.Id" />
+                            <input type="hidden" name="articleId" value="@article.Id" />
+                            <div class="input-group input-group-sm">
+                                <input type="file" class="form-control form-control-sm" name="photo" accept="image/*" />
+                                <button type="submit" class="btn btn-outline-success btn-sm">Ανέβασμα</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    @foreach (var photo in article.Photos)
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <img src="/uploads/@photo.FileName" alt="@photo.Caption" style="max-height:80px;" class="rounded" />
+                            <div class="flex-grow-1">
+                                <small class="text-muted">@photo.FileName</small>
+                                @if (photo.ApplyVintageEffect)
+                                {
+                                    <span class="badge bg-secondary">Παλαιωμένη</span>
+                                }
+                            </div>
+                            <form method="post" asp-page-handler="ToggleVintage" class="d-inline">
+                                <input type="hidden" name="id" value="@Model.Issue.Id" />
+                                <input type="hidden" name="photoId" value="@photo.Id" />
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                    @(photo.ApplyVintageEffect ? "Αφαίρεση Εφέ" : "Εφέ Παλαίωσης")
+                                </button>
+                            </form>
+                            <form method="post" asp-page-handler="DeletePhoto" class="d-inline">
+                                <input type="hidden" name="id" value="@Model.Issue.Id" />
+                                <input type="hidden" name="photoId" value="@photo.Id" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm">X</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Ads -->
+        <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+            <h4>Διαφημίσεις</h4>
+            <form method="post" asp-page-handler="AddAd">
+                <input type="hidden" name="id" value="@Model.Issue.Id" />
+                <button type="submit" class="btn btn-success btn-sm">Προσθήκη Διαφήμισης</button>
+            </form>
+        </div>
+
+        @foreach (var ad in Model.Issue.Ads.OrderBy(a => a.Order))
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Διαφήμιση #@ad.Order</span>
+                    <form method="post" asp-page-handler="DeleteAd" class="d-inline">
+                        <input type="hidden" name="id" value="@Model.Issue.Id" />
+                        <input type="hidden" name="adId" value="@ad.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Διαγραφή αυτής της διαφήμισης;')">Διαγραφή</button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="UpdateAd">
+                        <input type="hidden" name="id" value="@Model.Issue.Id" />
+                        <input type="hidden" name="adId" value="@ad.Id" />
+                        <div class="row mb-2">
+                            <div class="col-md-8">
+                                <label class="form-label">Κείμενο</label>
+                                <textarea class="form-control" name="adText" rows="2">@ad.Text</textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Μέγεθος</label>
+                                <select class="form-select" name="adSize">
+                                    <option value="Quarter" selected="@(ad.Size == FanzinePress.Web.Models.AdSize.Quarter)">Τέταρτο</option>
+                                    <option value="Half" selected="@(ad.Size == FanzinePress.Web.Models.AdSize.Half)">Μισό</option>
+                                    <option value="Full" selected="@(ad.Size == FanzinePress.Web.Models.AdSize.Full)">Πλήρες</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Σειρά</label>
+                            <input type="number" class="form-control" name="adOrder" value="@ad.Order" style="max-width:100px;" />
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Αποθήκευση Διαφήμισης</button>
+                    </form>
+                    <form method="post" asp-page-handler="UploadAdImage" enctype="multipart/form-data" class="mt-2">
+                        <input type="hidden" name="id" value="@Model.Issue.Id" />
+                        <input type="hidden" name="adId" value="@ad.Id" />
+                        <div class="input-group input-group-sm">
+                            <input type="file" class="form-control form-control-sm" name="adImage" accept="image/*" />
+                            <button type="submit" class="btn btn-outline-success btn-sm">Ανέβασμα Εικόνας</button>
+                        </div>
+                    </form>
+                    @if (ad.ImageFileName != null)
+                    {
+                        <img src="/uploads/@ad.ImageFileName" alt="Εικόνα διαφήμισης" style="max-height:80px;" class="rounded mt-2" />
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

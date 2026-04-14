@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fanzine-press",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/FanzinePress.Web"],
+      "port": 5107
+    }
+  ]
+}
