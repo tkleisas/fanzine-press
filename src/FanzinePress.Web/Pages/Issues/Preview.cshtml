@@ -96,11 +96,11 @@
             column-count: 3;
             column-gap: 20px;
             column-rule: 1px solid #ccc;
+            column-fill: balance;
         }
 
         .article {
-            margin-bottom: 20px;
-            /* No break-inside: avoid — allow articles to flow across pages */
+            margin-bottom: 10px;
         }
 
         .article.span-2 { column-span: all; }
@@ -111,10 +111,8 @@
             column-gap: 20px;
         }
 
-        /* Keep headlines together with the start of text */
         .article-header {
-            break-inside: avoid;
-            break-after: avoid;
+            /* No break constraints — let content flow tightly */
         }
 
         .article h2 {
@@ -175,7 +173,6 @@
         .article-photo {
             width: 100%;
             margin: 8px 0;
-            break-inside: avoid;
         }
 
         .article-photo img {
@@ -258,6 +255,7 @@
 
         @@media print {
             body { background: white; padding: 0; max-width: none; }
+            .articles-grid { column-fill: auto; }
             .vintage { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .ad-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
@@ -309,44 +307,75 @@
         @for (int i = 0; i < articles.Count; i++)
         {
             var article = articles[i];
-            <div class="article @(article.ColumnSpan > 1 ? $"span-{article.ColumnSpan}" : "")">
-                <div class="article-header">
-                    <h2>@article.Title</h2>
+            if (article.ColumnSpan > 1)
+            {
+                <div class="article span-@(article.ColumnSpan)">
+                    <h2 class="article-title">@article.Title</h2>
                     @if (!string.IsNullOrEmpty(article.Subtitle))
                     {
-                        <h3>@article.Subtitle</h3>
+                        <h3 class="article-subtitle">@article.Subtitle</h3>
                     }
                     @if (!string.IsNullOrEmpty(article.Author))
                     {
                         <div class="author">@article.Author</div>
                     }
-                </div>
-
-                <div class="@(article.ColumnSpan == 2 ? "article-body-columns" : "")">
-                    @foreach (var photo in article.Photos)
-                    {
-                        <div class="article-photo">
-                            <img src="/uploads/@photo.FileName" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
-                            @if (!string.IsNullOrEmpty(photo.Caption))
+                    <div class="@(article.ColumnSpan == 2 ? "article-body-columns" : "")">
+                        @foreach (var photo in article.Photos)
+                        {
+                            <div class="article-photo">
+                                <img src="/uploads/@photo.FileName" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
+                                @if (!string.IsNullOrEmpty(photo.Caption))
+                                {
+                                    <div class="caption">@photo.Caption @(!string.IsNullOrEmpty(photo.Credit) ? $"({photo.Credit})" : "")</div>
+                                }
+                            </div>
+                        }
+                        <div class="body">
+                            @foreach (var paragraph in article.Body.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                             {
-                                <div class="caption">@photo.Caption @(!string.IsNullOrEmpty(photo.Credit) ? $"({photo.Credit})" : "")</div>
+                                <p>@paragraph</p>
                             }
                         </div>
-                    }
-
-                    <div class="body">
-                        @foreach (var paragraph in article.Body.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-                        {
-                            <p>@paragraph</p>
-                        }
                     </div>
                 </div>
-
+                @if (i < articles.Count - 1)
+                {
+                    <div class="article-divider" style="column-span:all;">― ✦ ―</div>
+                }
+            }
+            else
+            {
+                @* Flat flow — no wrapping div, content flows directly in columns *@
+                <h2 class="article-title">@article.Title</h2>
+                @if (!string.IsNullOrEmpty(article.Subtitle))
+                {
+                    <h3 class="article-subtitle">@article.Subtitle</h3>
+                }
+                @if (!string.IsNullOrEmpty(article.Author))
+                {
+                    <div class="author">@article.Author</div>
+                }
+                @foreach (var photo in article.Photos)
+                {
+                    <div class="article-photo">
+                        <img src="/uploads/@photo.FileName" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
+                        @if (!string.IsNullOrEmpty(photo.Caption))
+                        {
+                            <div class="caption">@photo.Caption @(!string.IsNullOrEmpty(photo.Credit) ? $"({photo.Credit})" : "")</div>
+                        }
+                    </div>
+                }
+                <div class="body">
+                    @foreach (var paragraph in article.Body.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        <p>@paragraph</p>
+                    }
+                </div>
                 @if (i < articles.Count - 1)
                 {
                     <div class="article-divider">― ✦ ―</div>
                 }
-            </div>
+            }
         }
 
     </div>
