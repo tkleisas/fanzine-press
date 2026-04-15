@@ -27,3 +27,6 @@ Thumbs.db
 
 ## Chromium (PuppeteerSharp)
 .local-chromium/
+
+## Claude Code local settings
+.claude/settings.local.json

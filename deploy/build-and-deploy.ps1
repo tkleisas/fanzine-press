@@ -118,9 +118,13 @@ function Invoke-Pscp {
 }
 
 # --- Pack source tree ---
+# GetTempFileName() returns a C:\... path; Windows bsdtar parses the drive colon
+# as a remote host (rsh-style "host:path"), so we pass --force-local to disable
+# that parsing. Same reason we use forward slashes when invoking tar.
 $Tarball = [System.IO.Path]::GetTempFileName() + ".tar.gz"
+$TarballFwd = $Tarball -replace '\\','/'
 Write-Host ">>> Packing source tree"
-& tar czf $Tarball `
+& tar --force-local -czf $TarballFwd `
     --exclude=".git" `
     --exclude=".claude" `
     --exclude=".vs" `
