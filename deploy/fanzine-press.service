@@ -1,0 +1,29 @@
+[Unit]
+Description=Fanzine Press (ASP.NET Core in Docker)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+TimeoutStartSec=120
+TimeoutStopSec=30
+
+# Remove any stale container before starting (-f ignores "not found")
+ExecStartPre=-/usr/bin/docker rm -f fanzine-press
+
+ExecStart=/usr/bin/docker run --rm \
+    --name fanzine-press \
+    --env-file /etc/fanzine-press/fanzine-press.env \
+    -p 127.0.0.1:5055:8080 \
+    -v /var/lib/fanzine-press:/data \
+    --user 1001:1001 \
+    --log-driver=journald \
+    fanzine-press:latest
+
+ExecStop=/usr/bin/docker stop fanzine-press
+
+[Install]
+WantedBy=multi-user.target

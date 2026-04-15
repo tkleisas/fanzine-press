@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FanzinePress.Web.Data;
@@ -6,6 +8,24 @@ using FanzinePress.Web.Models;
 using FanzinePress.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Path base for sub-path hosting behind a reverse proxy (e.g. /fanzine-press)
+// Set via FANZINE_PATH_BASE env var or FanzinePress:PathBase config.
+var pathBase = builder.Configuration["FanzinePress:PathBase"]
+    ?? Environment.GetEnvironmentVariable("FANZINE_PATH_BASE");
+
+// Trust X-Forwarded-* headers from the reverse proxy so HTTPS redirection,
+// generated URLs and cookie security flags are based on the original request.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                             | ForwardedHeaders.XForwardedProto
+                             | ForwardedHeaders.XForwardedHost;
+    // The proxy is on the same host / docker bridge — clear the default
+    // restricted networks so the headers are honoured.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddDbContext<FanzinePressDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
@@ -46,8 +66,23 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// Persist Data Protection keys to a writable location that survives container
+// redeploys, so cookie-encrypted data (auth tickets, antiforgery) stays valid.
+// Defaults to the framework location; set FANZINE_DATA_PROTECTION_KEYS to
+// persist under the /data volume when running in the container.
+var dpKeysPath = builder.Configuration["FanzinePress:DataProtectionKeys"]
+    ?? Environment.GetEnvironmentVariable("FANZINE_DATA_PROTECTION_KEYS");
+if (!string.IsNullOrWhiteSpace(dpKeysPath))
+{
+    Directory.CreateDirectory(dpKeysPath);
+    builder.Services.AddDataProtection()
+        .SetApplicationName("FanzinePress")
+        .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath));
+}
+
 builder.Services.AddControllers();
 builder.Services.AddSingleton<PdfService>();
+builder.Services.AddSingleton<VersionInfo>();
 
 var app = builder.Build();
 
@@ -114,18 +149,40 @@ using (var scope = app.Services.CreateScope())
     await BootstrapIdentityAsync(scope.ServiceProvider, db, app.Configuration);
 }
 
+// Forwarded headers MUST come before anything that inspects scheme/host/remote-IP.
+app.UseForwardedHeaders();
+
+if (!string.IsNullOrWhiteSpace(pathBase))
+{
+    app.UsePathBase(pathBase);
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS when NOT behind a reverse proxy that already terminates TLS.
+// When FANZINE_BEHIND_PROXY=true, the proxy handles HTTPS and in-container requests are HTTP.
+var behindProxy = string.Equals(
+    builder.Configuration["FanzinePress:BehindProxy"]
+        ?? Environment.GetEnvironmentVariable("FANZINE_BEHIND_PROXY"),
+    "true", StringComparison.OrdinalIgnoreCase);
+
+if (!behindProxy)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// Static assets must be anonymously accessible or the unauthenticated login
+// page renders without CSS/JS (the fallback authorization policy would 302 them
+// to /Account/Login).
+app.MapStaticAssets().AllowAnonymous();
 app.MapControllers();
 app.MapRazorPages()
    .WithStaticAssets();

@@ -31,8 +31,10 @@ public class ExportPdfModel : PageModel
         var isAdmin = User.IsInRole(Roles.Admin);
         if (!isAdmin && issue.OwnerId != userId) return Forbid();
 
-        // Build the absolute URL to the Preview page
-        var previewUrl = $"{Request.Scheme}://{Request.Host}/Issues/Preview/{id}";
+        // Build the absolute URL to the Preview page.
+        // PathBase is included so sub-path hosting (e.g. /fanzine-press) works,
+        // and Scheme/Host come from X-Forwarded-* when behind a reverse proxy.
+        var previewUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/Issues/Preview/{id}";
 
         // Forward the authentication cookies so PuppeteerSharp can fetch the
         // Preview page and image endpoints as the current user.

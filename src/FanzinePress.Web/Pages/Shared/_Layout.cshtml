@@ -1,3 +1,4 @@
+@inject FanzinePress.Web.Services.VersionInfo VersionInfo
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -62,6 +63,8 @@
     <footer class="border-top footer text-muted mt-4 py-3">
         <div class="container text-center">
             Fanzine Press &mdash; Δημιουργός Εφημερίδων Ανοιχτού Κώδικα
+            <span class="mx-2">·</span>
+            <span class="font-monospace small">@VersionInfo.Display</span>
         </div>
     </footer>
 

@@ -8,10 +8,12 @@ public class PdfService : IAsyncDisposable
     private IBrowser? _browser;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private readonly ILogger<PdfService> _logger;
+    private readonly IConfiguration _configuration;
 
-    public PdfService(ILogger<PdfService> logger)
+    public PdfService(ILogger<PdfService> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
 
     private async Task<IBrowser> GetBrowserAsync()
@@ -25,15 +27,34 @@ public class PdfService : IAsyncDisposable
             if (_browser is { IsClosed: false })
                 return _browser;
 
-            _logger.LogInformation("Downloading Chromium if needed...");
-            var browserFetcher = new BrowserFetcher();
-            await browserFetcher.DownloadAsync();
+            // Prefer a pre-installed system Chromium (docker image installs one).
+            // Falls back to BrowserFetcher for local dev if no path is configured.
+            var executablePath = _configuration["FanzinePress:ChromiumPath"]
+                ?? Environment.GetEnvironmentVariable("FANZINE_CHROMIUM_PATH");
+
+            if (string.IsNullOrWhiteSpace(executablePath))
+            {
+                _logger.LogInformation("No FANZINE_CHROMIUM_PATH set, downloading Chromium via BrowserFetcher...");
+                var browserFetcher = new BrowserFetcher();
+                await browserFetcher.DownloadAsync();
+            }
+            else
+            {
+                _logger.LogInformation("Using system Chromium at {Path}", executablePath);
+            }
 
             _logger.LogInformation("Launching headless browser...");
             _browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless = true,
-                Args = ["--no-sandbox", "--disable-setuid-sandbox"]
+                ExecutablePath = string.IsNullOrWhiteSpace(executablePath) ? null : executablePath,
+                Args =
+                [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu"
+                ]
             });
 
             return _browser;

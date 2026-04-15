@@ -266,7 +266,7 @@
         <div class="header-left">
             @if (Model.Issue.TitleImageFileName != null)
             {
-                <img src="/api/images/title/@Model.Issue.Id" alt="@Model.Issue.Title" class="title-image" />
+                <img src="~/api/images/title/@Model.Issue.Id" alt="@Model.Issue.Title" class="title-image" />
             }
             <h1>@Model.Issue.Title</h1>
             @if (Model.Issue.Settings?.Motto != null)
@@ -323,7 +323,7 @@
                         @foreach (var photo in article.Photos)
                         {
                             <div class="article-photo">
-                                <img src="/api/images/photo/@photo.Id" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
+                                <img src="~/api/images/photo/@photo.Id" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
                                 @if (!string.IsNullOrEmpty(photo.Caption))
                                 {
                                     <div class="caption">@photo.Caption @(!string.IsNullOrEmpty(photo.Credit) ? $"({photo.Credit})" : "")</div>
@@ -358,7 +358,7 @@
                 @foreach (var photo in article.Photos)
                 {
                     <div class="article-photo">
-                        <img src="/api/images/photo/@photo.Id" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
+                        <img src="~/api/images/photo/@photo.Id" alt="@photo.Caption" class="@(photo.ApplyVintageEffect ? "vintage" : "")" />
                         @if (!string.IsNullOrEmpty(photo.Caption))
                         {
                             <div class="caption">@photo.Caption @(!string.IsNullOrEmpty(photo.Credit) ? $"({photo.Credit})" : "")</div>
@@ -385,7 +385,7 @@
         <div class="ad-block ad-@(ad.Size.ToString().ToLower())">
             @if (ad.ImageFileName != null)
             {
-                <img src="/api/images/ad/@ad.Id" alt="Ad" />
+                <img src="~/api/images/ad/@ad.Id" alt="Ad" />
             }
             @if (!string.IsNullOrEmpty(ad.Text))
             {

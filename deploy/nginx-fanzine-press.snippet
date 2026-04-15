@@ -1,0 +1,29 @@
+	# --- Fanzine Press ---
+	# Redirect /fanzine-press to /fanzine-press/ so relative links resolve.
+	location = /fanzine-press {
+		return 301 /fanzine-press/;
+	}
+
+	location ^~ /fanzine-press/ {
+		proxy_pass         http://127.0.0.1:5055;
+		proxy_http_version 1.1;
+
+		# WebSocket / keep-alive upgrade (harmless even without WS)
+		proxy_set_header   Upgrade           $http_upgrade;
+		proxy_set_header   Connection        "upgrade";
+
+		proxy_set_header   Host              $host;
+		proxy_set_header   X-Real-IP         $remote_addr;
+		proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+		proxy_set_header   X-Forwarded-Proto $scheme;
+		proxy_set_header   X-Forwarded-Host  $host;
+		proxy_cache_bypass $http_upgrade;
+
+		# PDF export can take a while (Chromium launch + render)
+		proxy_read_timeout 120s;
+		proxy_send_timeout 120s;
+
+		# Allow larger image uploads (photos, title images, ads)
+		client_max_body_size 25m;
+	}
+	# --- /Fanzine Press ---

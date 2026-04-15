@@ -51,7 +51,7 @@
             <div class="card-body">
                 @if (Model.Issue.TitleImageFileName != null)
                 {
-                    <img src="/api/images/title/@Model.Issue.Id" alt="Εικόνα τίτλου" class="img-fluid rounded mb-2" />
+                    <img src="~/api/images/title/@Model.Issue.Id" alt="Εικόνα τίτλου" class="img-fluid rounded mb-2" />
                     <form method="post" asp-page-handler="RemoveTitleImage">
                         <input type="hidden" name="id" value="@Model.Issue.Id" />
                         <button type="submit" class="btn btn-outline-danger btn-sm">Αφαίρεση Εικόνας</button>
@@ -181,7 +181,7 @@
                     @foreach (var photo in article.Photos)
                     {
                         <div class="d-flex align-items-center gap-2 mb-2">
-                            <img src="/api/images/photo/@photo.Id" alt="@photo.Caption" style="max-height:80px;" class="rounded" />
+                            <img src="~/api/images/photo/@photo.Id" alt="@photo.Caption" style="max-height:80px;" class="rounded" />
                             <div class="flex-grow-1">
                                 <small class="text-muted">@photo.FileName</small>
                                 @if (photo.ApplyVintageEffect)
@@ -261,7 +261,7 @@
                     </form>
                     @if (ad.ImageFileName != null)
                     {
-                        <img src="/api/images/ad/@ad.Id" alt="Εικόνα διαφήμισης" style="max-height:80px;" class="rounded mt-2" />
+                        <img src="~/api/images/ad/@ad.Id" alt="Εικόνα διαφήμισης" style="max-height:80px;" class="rounded mt-2" />
                     }
                 </div>
             </div>
