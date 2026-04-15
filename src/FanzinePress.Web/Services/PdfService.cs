@@ -44,10 +44,19 @@ public class PdfService : IAsyncDisposable
         }
     }
 
-    public async Task<byte[]> RenderPdfAsync(string url)
+    public async Task<byte[]> RenderPdfAsync(string url, IEnumerable<CookieParam>? cookies = null)
     {
         var browser = await GetBrowserAsync();
         await using var page = await browser.NewPageAsync();
+
+        if (cookies != null)
+        {
+            var cookieArray = cookies.ToArray();
+            if (cookieArray.Length > 0)
+            {
+                await page.SetCookieAsync(cookieArray);
+            }
+        }
 
         // Navigate and wait for full load
         await page.GoToAsync(url, null, [WaitUntilNavigation.Load]);

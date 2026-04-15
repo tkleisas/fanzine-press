@@ -1,0 +1,35 @@
+@page
+@model FanzinePress.Web.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Σύνδεση";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card mt-4">
+            <div class="card-header"><h4 class="mb-0">Σύνδεση</h4></div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Input.Email">Email</label>
+                        <input type="email" class="form-control" asp-for="Input.Email" autocomplete="username" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Input.Password">Κωδικός</label>
+                        <input type="password" class="form-control" asp-for="Input.Password" autocomplete="current-password" required />
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" asp-for="Input.RememberMe" />
+                        <label class="form-check-label" asp-for="Input.RememberMe">Να με θυμάσαι</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Σύνδεση</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

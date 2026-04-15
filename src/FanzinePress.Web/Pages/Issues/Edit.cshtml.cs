@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using FanzinePress.Web.Data;
@@ -10,14 +12,38 @@ public class EditModel : PageModel
 {
     private readonly FanzinePressDbContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public EditModel(FanzinePressDbContext db, IWebHostEnvironment env)
+    public EditModel(FanzinePressDbContext db, IWebHostEnvironment env, UserManager<ApplicationUser> userManager)
     {
         _db = db;
         _env = env;
+        _userManager = userManager;
     }
 
     public Issue Issue { get; set; } = null!;
+
+    public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+    {
+        // Authorize: only owner or admin may access this page's handlers
+        if (context.HandlerArguments.TryGetValue("id", out var idObj) && idObj is int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            var isAdmin = User.IsInRole(Roles.Admin);
+            var ownerId = await _db.Issues.Where(i => i.Id == id).Select(i => i.OwnerId).FirstOrDefaultAsync();
+            if (ownerId == null)
+            {
+                context.Result = NotFound();
+                return;
+            }
+            if (!isAdmin && ownerId != userId)
+            {
+                context.Result = Forbid();
+                return;
+            }
+        }
+        await next();
+    }
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -106,22 +132,16 @@ public class EditModel : PageModel
     {
         if (photo == null || photo.Length == 0) return RedirectToPage(new { id });
 
-        var uploadsDir = Path.Combine(_env.WebRootPath, "uploads");
-        Directory.CreateDirectory(uploadsDir);
-
-        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
-        var filePath = Path.Combine(uploadsDir, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await photo.CopyToAsync(stream);
-        }
+        using var ms = new MemoryStream();
+        await photo.CopyToAsync(ms);
 
         _db.Photos.Add(new Photo
         {
             ArticleId = articleId,
-            FileName = fileName,
-            Caption = Path.GetFileNameWithoutExtension(photo.FileName)
+            FileName = photo.FileName,
+            Caption = Path.GetFileNameWithoutExtension(photo.FileName),
+            ImageData = ms.ToArray(),
+            ImageContentType = photo.ContentType
         });
         await _db.SaveChangesAsync();
 
@@ -144,8 +164,6 @@ public class EditModel : PageModel
         var photo = await _db.Photos.FindAsync(photoId);
         if (photo != null)
         {
-            var filePath = Path.Combine(_env.WebRootPath, "uploads", photo.FileName);
-            if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath);
             _db.Photos.Remove(photo);
             await _db.SaveChangesAsync();
         }
@@ -159,25 +177,12 @@ public class EditModel : PageModel
         var issue = await _db.Issues.FindAsync(id);
         if (issue == null) return NotFound();
 
-        var uploadsDir = Path.Combine(_env.WebRootPath, "uploads");
-        Directory.CreateDirectory(uploadsDir);
+        using var ms = new MemoryStream();
+        await titleImage.CopyToAsync(ms);
 
-        // Remove old title image if exists
-        if (issue.TitleImageFileName != null)
-        {
-            var oldPath = Path.Combine(uploadsDir, issue.TitleImageFileName);
-            if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
-        }
-
-        var fileName = $"title-{Guid.NewGuid()}{Path.GetExtension(titleImage.FileName)}";
-        var filePath = Path.Combine(uploadsDir, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await titleImage.CopyToAsync(stream);
-        }
-
-        issue.TitleImageFileName = fileName;
+        issue.TitleImageFileName = titleImage.FileName;
+        issue.TitleImageData = ms.ToArray();
+        issue.TitleImageContentType = titleImage.ContentType;
         await _db.SaveChangesAsync();
 
         return RedirectToPage(new { id });
@@ -190,9 +195,9 @@ public class EditModel : PageModel
 
         if (issue.TitleImageFileName != null)
         {
-            var filePath = Path.Combine(_env.WebRootPath, "uploads", issue.TitleImageFileName);
-            if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath);
             issue.TitleImageFileName = null;
+            issue.TitleImageData = null;
+            issue.TitleImageContentType = null;
             await _db.SaveChangesAsync();
         }
 
@@ -243,18 +248,12 @@ public class EditModel : PageModel
         var ad = await _db.Ads.FindAsync(adId);
         if (ad == null) return NotFound();
 
-        var uploadsDir = Path.Combine(_env.WebRootPath, "uploads");
-        Directory.CreateDirectory(uploadsDir);
+        using var ms = new MemoryStream();
+        await adImage.CopyToAsync(ms);
 
-        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(adImage.FileName)}";
-        var filePath = Path.Combine(uploadsDir, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await adImage.CopyToAsync(stream);
-        }
-
-        ad.ImageFileName = fileName;
+        ad.ImageFileName = adImage.FileName;
+        ad.ImageData = ms.ToArray();
+        ad.ImageContentType = adImage.ContentType;
         await _db.SaveChangesAsync();
 
         return RedirectToPage(new { id });

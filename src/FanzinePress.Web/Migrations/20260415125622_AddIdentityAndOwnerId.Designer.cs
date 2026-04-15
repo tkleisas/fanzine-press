@@ -3,6 +3,7 @@ using System;
 using FanzinePress.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FanzinePress.Web.Migrations
 {
     [DbContext(typeof(FanzinePressDbContext))]
-    partial class FanzinePressDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260415125622_AddIdentityAndOwnerId")]
+    partial class AddIdentityAndOwnerId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");

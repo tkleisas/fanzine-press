@@ -9,6 +9,10 @@ public class Ad
     public AdSize Size { get; set; } = AdSize.Quarter;
     public int Order { get; set; }
 
+    // Image stored in DB as binary
+    public byte[]? ImageData { get; set; }
+    public string? ImageContentType { get; set; }
+
     public Issue Issue { get; set; } = null!;
 }
 

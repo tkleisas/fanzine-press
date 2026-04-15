@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using FanzinePress.Web.Models;
 
 namespace FanzinePress.Web.Data;
 
-public class FanzinePressDbContext : DbContext
+public class FanzinePressDbContext : IdentityDbContext<ApplicationUser>
 {
     public FanzinePressDbContext(DbContextOptions<FanzinePressDbContext> options)
         : base(options)
@@ -19,12 +20,16 @@ public class FanzinePressDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Issue>(e =>
         {
             e.HasMany(i => i.Articles).WithOne(a => a.Issue).HasForeignKey(a => a.IssueId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(i => i.Ads).WithOne(a => a.Issue).HasForeignKey(a => a.IssueId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(i => i.Colophon).WithOne(c => c.Issue).HasForeignKey<Colophon>(c => c.IssueId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(i => i.Settings).WithOne(s => s.Issue).HasForeignKey<IssueSettings>(s => s.IssueId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.Owner).WithMany().HasForeignKey(i => i.OwnerId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(i => i.OwnerId);
         });
 
         modelBuilder.Entity<Article>(e =>

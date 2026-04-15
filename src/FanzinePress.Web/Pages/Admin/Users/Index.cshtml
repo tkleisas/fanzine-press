@@ -1,0 +1,68 @@
+@page
+@model FanzinePress.Web.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Χρήστες";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Χρήστες</h1>
+    <a asp-page="Create" class="btn btn-primary">Νέος Χρήστης</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Όνομα</th>
+            <th>Ρόλος</th>
+            <th>Δημιουργήθηκε</th>
+            <th>Ενέργειες</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model.Users)
+        {
+            <tr>
+                <td>@u.Email</td>
+                <td>@u.DisplayName</td>
+                <td>
+                    @if (u.Roles.Contains("Admin"))
+                    {
+                        <span class="badge bg-danger">Admin</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Editor</span>
+                    }
+                </td>
+                <td>@u.CreatedAt.ToString("dd/MM/yyyy")</td>
+                <td>
+                    @if (u.Id != Model.CurrentUserId)
+                    {
+                        <form method="post" asp-page-handler="ToggleRole" class="d-inline">
+                            <input type="hidden" name="userId" value="@u.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Αλλαγή Ρόλου</button>
+                        </form>
+                        <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Διαγραφή χρήστη;');">
+                            <input type="hidden" name="userId" value="@u.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Διαγραφή</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">(εσείς)</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

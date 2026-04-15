@@ -1,0 +1,17 @@
+@page
+@model FanzinePress.Web.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Αποσύνδεση";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <p>Έχετε αποσυνδεθεί.</p>
+                <a class="btn btn-primary" asp-page="/Account/Login">Σύνδεση ξανά</a>
+            </div>
+        </div>
+    </div>
+</div>

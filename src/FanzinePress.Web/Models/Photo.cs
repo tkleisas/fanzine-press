@@ -9,5 +9,9 @@ public class Photo
     public string? Credit { get; set; }
     public bool ApplyVintageEffect { get; set; }
 
+    // Image stored in DB as binary
+    public byte[]? ImageData { get; set; }
+    public string? ImageContentType { get; set; }
+
     public Article Article { get; set; } = null!;
 }
